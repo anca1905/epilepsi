@@ -13,7 +13,10 @@ $pesan = "";
 if (isset($_POST['tambah'])) {
     $kode_penyakit = mysqli_real_escape_string($conn, $_POST['kode_penyakit']);
     $kode_gejala   = mysqli_real_escape_string($conn, $_POST['kode_gejala']);
-    $probabilitas  = mysqli_real_escape_string($conn, $_POST['probabilitas']);
+    $pasien_terkena = isset($_POST['pasien_terkena']) ? (float)$_POST['pasien_terkena'] : 0;
+    $total_kasus    = isset($_POST['total_kasus']) ? (float)$_POST['total_kasus'] : 1;
+    $probabilitas_val = $total_kasus > 0 ? $pasien_terkena / $total_kasus : 0;
+    $probabilitas  = number_format($probabilitas_val, 4, '.', '');
 
     // Cek apakah kombinasi sudah ada
     $cek = mysqli_query($conn, "SELECT * FROM basis_pengetahuan 
@@ -36,11 +39,14 @@ if (isset($_POST['tambah'])) {
 // 2. PROSES EDIT
 if (isset($_POST['edit'])) {
     $id_basis     = mysqli_real_escape_string($conn, $_POST['id_basis']);
-    $probabilitas = mysqli_real_escape_string($conn, $_POST['probabilitas']);
+    $pasien_terkena = isset($_POST['pasien_terkena']) ? (float)$_POST['pasien_terkena'] : 0;
+    $total_kasus    = isset($_POST['total_kasus']) ? (float)$_POST['total_kasus'] : 1;
+    $probabilitas_val = $total_kasus > 0 ? $pasien_terkena / $total_kasus : 0;
+    $probabilitas  = number_format($probabilitas_val, 4, '.', '');
 
     $update = mysqli_query($conn, "UPDATE basis_pengetahuan SET probabilitas = '$probabilitas' WHERE id_basis = '$id_basis'");
     if ($update) {
-        $pesan = "<div class='alert alert-success'><i class='bi bi-check-circle me-2'></i>Nilai probabilitas berhasil diperbarui!</div>";
+        $pesan = "<div class='alert alert-success'><i class='bi bi-check-circle me-2'></i>Nilai P(G|P) berhasil diperbarui!</div>";
     } else {
         $pesan = "<div class='alert alert-danger'><i class='bi bi-x-circle me-2'></i>Gagal memperbarui: " . mysqli_error($conn) . "</div>";
     }
@@ -119,7 +125,7 @@ require 'layout/sidebar_admin.php';
             <div>
                 <h2 class="fw-bold mb-0" style="font-size:1.35rem;">Manajemen Basis Pengetahuan</h2>
                 <p class="text-muted mb-0" style="font-size:0.85rem;">
-                    Kelola nilai probabilitas P(Gejala | Penyakit) untuk metode Naive Bayes.
+                    Kelola nilai P(Gejala | Penyakit) untuk metode Naive Bayes.
                 </p>
             </div>
             <button type="button" class="btn btn-brand" data-bs-toggle="modal" data-bs-target="#modalTambah">
@@ -203,7 +209,7 @@ require 'layout/sidebar_admin.php';
                             <th class="text-center" style="width:5%;">No</th>
                             <th style="width:22%;">Penyakit</th>
                             <th style="width:35%;">Gejala</th>
-                            <th class="text-center" style="width:18%;">Probabilitas P(G|P)</th>
+                            <th class="text-center" style="width:18%;">Nilai P(G|P)</th>
                             <th class="text-center" style="width:10%;">Visual</th>
                             <th class="text-center" style="width:10%;">Aksi</th>
                         </tr>
@@ -252,7 +258,7 @@ require 'layout/sidebar_admin.php';
                                 <button class="btn btn-sm btn-outline-primary me-1"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modalEdit<?= $row['id_basis'] ?>"
-                                        title="Edit Probabilitas">
+                                        title="Edit Nilai P(G|P)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <a href="admin_basis.php?hapus=<?= $row['id_basis'] ?><?= $filter_penyakit ? '&filter_penyakit=' . $filter_penyakit : '' ?>"
@@ -270,7 +276,7 @@ require 'layout/sidebar_admin.php';
                                 <div class="modal-content">
                                     <div class="modal-header" style="background:var(--brand-gradient);">
                                         <h5 class="modal-title text-white">
-                                            <i class="bi bi-pencil-square me-2"></i>Edit Probabilitas
+                                            <i class="bi bi-pencil-square me-2"></i>Edit Nilai P(G|P)
                                         </h5>
                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                     </div>
@@ -293,15 +299,22 @@ require 'layout/sidebar_admin.php';
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="mb-2">
-                                                <label class="form-label">Nilai Probabilitas P(G|P)</label>
-                                                <input type="number" name="probabilitas" class="form-control"
-                                                       value="<?= $row['probabilitas'] ?>"
-                                                       step="0.0001" min="0" max="1"
-                                                       placeholder="Contoh: 0.8500" required>
-                                                <div class="form-text">
-                                                    <i class="bi bi-info-circle me-1"></i>Masukkan nilai antara 0 (0%) hingga 1 (100%).
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Jumlah Pasien Terkena Gejala</label>
+                                                    <input type="number" name="pasien_terkena" class="form-control"
+                                                           min="0" placeholder="Contoh: 10" required>
                                                 </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Jumlah Total Kasus Penyakit</label>
+                                                    <input type="number" name="total_kasus" class="form-control"
+                                                           min="1" placeholder="Contoh: 20" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-text mb-2">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                Nilai P(G|P) saat ini: <strong><?= number_format($row['probabilitas'], 4) ?></strong>. 
+                                                Isi jumlah pasien dan total kasus untuk menghitung nilai baru.
                                             </div>
                                         </div>
                                         <div class="modal-footer">
@@ -378,15 +391,21 @@ require 'layout/sidebar_admin.php';
                             <?php endwhile; ?>
                         </select>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label">Nilai Probabilitas P(G|P)</label>
-                        <input type="number" name="probabilitas" class="form-control"
-                               step="0.0001" min="0" max="1"
-                               placeholder="Contoh: 0.8500" required>
-                        <div class="form-text">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Nilai probabilitas kondisional gejala ini muncul pada penyakit tersebut (0 – 1).
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Jumlah Pasien Terkena Gejala</label>
+                            <input type="number" name="pasien_terkena" class="form-control"
+                                   min="0" placeholder="Contoh: 10" required>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Jumlah Total Kasus Penyakit</label>
+                            <input type="number" name="total_kasus" class="form-control"
+                                   min="1" placeholder="Contoh: 20" required>
+                        </div>
+                    </div>
+                    <div class="form-text mb-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Nilai P(G|P) akan dihitung otomatis (Pasien Terkena / Total Kasus).
                     </div>
                 </div>
                 <div class="modal-footer">
