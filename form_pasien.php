@@ -1,4 +1,5 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require 'koneksi.php';
 
 if (isset($_POST['submit'])) {
@@ -20,8 +21,15 @@ if (isset($_POST['submit'])) {
 }
 
 $page_title = 'Data Pasien';
-$active_nav = 'diagnosa';
-require 'layout/header_public.php';
+if (isset($_SESSION['login_admin'])) {
+    $active_page = 'diagnosa';
+    require 'layout/head_admin.php';
+    require 'layout/sidebar_admin.php';
+    echo '<div class="admin-main"><div class="admin-topbar"><h1 class="page-heading"><i class="bi bi-person-vcard me-2 text-success"></i>Data Pasien</h1></div><div class="admin-content">';
+} else {
+    $active_nav = 'diagnosa';
+    require 'layout/header_public.php';
+}
 ?>
 
 <div class="container py-5">
@@ -116,4 +124,10 @@ require 'layout/header_public.php';
     </div>
 </div>
 
-<?php require 'layout/footer_public.php'; ?>
+<?php
+if (isset($_SESSION['login_admin'])) {
+    echo '</div></div></div><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script></body></html>';
+} else {
+    require 'layout/footer_public.php';
+}
+?>

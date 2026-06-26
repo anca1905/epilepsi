@@ -119,6 +119,9 @@ require 'layout/sidebar_admin.php';
                         <i class="bi bi-grid-3x3-gap text-success"></i> Menu Cepat
                     </h6>
                     <div class="d-flex flex-column gap-2">
+                        <a href="form_pasien.php" class="btn btn-outline-warning btn-sm text-start">
+                            <i class="bi bi-clipboard2-pulse me-2"></i>Mulai Diagnosa
+                        </a>
                         <a href="admin_gejala.php" class="btn btn-outline-success btn-sm text-start">
                             <i class="bi bi-file-earmark-medical me-2"></i>Kelola Gejala
                         </a>
