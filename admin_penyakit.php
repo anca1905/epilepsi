@@ -15,7 +15,10 @@ if (isset($_POST['tambah'])) {
     $nama       = mysqli_real_escape_string($conn, $_POST['nama_penyakit']);
     $keterangan = mysqli_real_escape_string($conn, $_POST['keterangan']);
     $solusi     = mysqli_real_escape_string($conn, $_POST['solusi']);
-    $prior      = mysqli_real_escape_string($conn, $_POST['probabilitas_prior']);
+    $prior      = (float)$_POST['probabilitas_prior'];
+    // Pastikan nilai prior valid (antara 0 dan 1)
+    if ($prior < 0) $prior = 0;
+    if ($prior > 1) $prior = 1;
 
     $cek = mysqli_query($conn, "SELECT * FROM penyakit WHERE kode_penyakit = '$kode'");
     if (mysqli_num_rows($cek) > 0) {
@@ -37,7 +40,9 @@ if (isset($_POST['edit'])) {
     $nama       = mysqli_real_escape_string($conn, $_POST['nama_penyakit']);
     $keterangan = mysqli_real_escape_string($conn, $_POST['keterangan']);
     $solusi     = mysqli_real_escape_string($conn, $_POST['solusi']);
-    $prior      = mysqli_real_escape_string($conn, $_POST['probabilitas_prior']);
+    $prior      = (float)$_POST['probabilitas_prior'];
+    if ($prior < 0) $prior = 0;
+    if ($prior > 1) $prior = 1;
 
     $update = mysqli_query($conn, "UPDATE penyakit SET kode_penyakit = '$kode_baru', nama_penyakit = '$nama', keterangan = '$keterangan', solusi = '$solusi', probabilitas_prior = '$prior' WHERE kode_penyakit = '$kode_lama'");
     if ($update) {
@@ -107,10 +112,10 @@ require 'layout/sidebar_admin.php';
                     <thead>
                         <tr>
                             <th class="text-center" style="width:5%;">No</th>
-                            <th style="width:9%;">Kode</th>
-                            <th style="width:18%;">Nama Penyakit</th>
-                            <th style="width:20%;">Keterangan</th>
-                            <th style="width:20%;">Solusi Penanganan</th>
+                            <th style="width:8%;">Kode</th>
+                            <th style="width:15%;">Nama Penyakit</th>
+                            <th style="width:15%;">Keterangan</th>
+                            <th style="width:22%;">Solusi Penanganan</th>
                             <th class="text-center" style="width:10%;">Prior P(Pi)</th>
                             <th class="text-center" style="width:13%;">Aksi</th>
                         </tr>
@@ -141,8 +146,8 @@ require 'layout/sidebar_admin.php';
                                 </div>
                             </td>
                             <td class="text-center">
-                                <span class="badge rounded-pill fw-bold" style="background:rgba(6,78,59,0.1);color:#065f46;font-size:0.82rem;padding:5px 10px;">
-                                    <?= number_format((float)$row['probabilitas_prior'], 2) ?>
+                                <span class="badge" style="background:rgba(16,185,129,0.12);color:#059669;font-size:0.82rem;padding:5px 10px;font-weight:600;">
+                                    <?= number_format((float)$row['probabilitas_prior'], 4) ?>
                                 </span>
                             </td>
                             <td class="text-center">
@@ -174,36 +179,32 @@ require 'layout/sidebar_admin.php';
                                         <div class="modal-body p-4">
                                             <input type="hidden" name="kode_lama" value="<?= $row['kode_penyakit'] ?>">
                                             <div class="row">
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label">Kode Penyakit</label>
-                                                    <input type="text" name="kode_penyakit" class="form-control"
-                                                           value="<?= $row['kode_penyakit'] ?>" required>
-                                                </div>
-                                                <div class="col-md-8 mb-3">
-                                                    <label class="form-label">Nama Penyakit</label>
-                                                    <input type="text" name="nama_penyakit" class="form-control"
-                                                           value="<?= htmlspecialchars($row['nama_penyakit']) ?>" required>
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Keterangan / Deskripsi</label>
-                                                <textarea name="keterangan" class="form-control" rows="3" required><?= htmlspecialchars($row['keterangan']) ?></textarea>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Solusi Penanganan Awal</label>
-                                                <textarea name="solusi" class="form-control" rows="3" required><?= htmlspecialchars($row['solusi']) ?></textarea>
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label d-flex align-items-center gap-1">
-                                                    Probabilitas Prior P(Pi)
-                                                    <span class="badge bg-info bg-opacity-10 text-info" style="font-size:0.7rem;font-weight:500;">Untuk Bayes</span>
-                                                </label>
-                                                <input type="number" name="probabilitas_prior" class="form-control"
-                                                       value="<?= $row['probabilitas_prior'] ?>"
-                                                       step="0.01" min="0" max="1" required>
-                                                <div class="form-text"><i class="bi bi-info-circle me-1"></i>Nilai antara 0–1. Total semua penyakit harus = 1.</div>
-                                            </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Kode Penyakit</label>
+                                            <input type="text" name="kode_penyakit" class="form-control"
+                                                   value="<?= $row['kode_penyakit'] ?>" required>
                                         </div>
+                                        <div class="col-md-5 mb-3">
+                                            <label class="form-label">Nama Penyakit</label>
+                                            <input type="text" name="nama_penyakit" class="form-control"
+                                                   value="<?= htmlspecialchars($row['nama_penyakit']) ?>" required>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Prior P(Pi) <small class="text-muted">(0–1)</small></label>
+                                            <input type="number" name="probabilitas_prior" class="form-control"
+                                                   value="<?= number_format((float)$row['probabilitas_prior'], 4, '.', '') ?>"
+                                                   min="0" max="1" step="0.0001" required>
+                                            <div class="form-text">Contoh: 9 pasien dari 20 → 0.45</div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Keterangan / Deskripsi</label>
+                                        <textarea name="keterangan" class="form-control" rows="3" required><?= htmlspecialchars($row['keterangan']) ?></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Solusi Penanganan Awal</label>
+                                        <textarea name="solusi" class="form-control" rows="3" required><?= htmlspecialchars($row['solusi']) ?></textarea>
+                                    </div>        </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
                                             <button type="submit" name="edit" class="btn btn-brand">
@@ -249,9 +250,15 @@ require 'layout/sidebar_admin.php';
                             <label class="form-label">Kode Penyakit</label>
                             <input type="text" name="kode_penyakit" class="form-control" placeholder="Contoh: P01" required>
                         </div>
-                        <div class="col-md-8 mb-3">
+                        <div class="col-md-5 mb-3">
                             <label class="form-label">Nama Penyakit</label>
                             <input type="text" name="nama_penyakit" class="form-control" placeholder="Contoh: Epilepsi Parsial Sederhana" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Prior P(Pi) <small class="text-muted">(0–1)</small></label>
+                            <input type="number" name="probabilitas_prior" class="form-control"
+                                   placeholder="Contoh: 0.45" min="0" max="1" step="0.0001" required>
+                            <div class="form-text">Contoh: 9 dari 20 pasien → 0.45</div>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -261,15 +268,6 @@ require 'layout/sidebar_admin.php';
                     <div class="mb-3">
                         <label class="form-label">Solusi Penanganan Awal</label>
                         <textarea name="solusi" class="form-control" rows="3" placeholder="Contoh: Amankan lingkungan sekitar anak..." required></textarea>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label d-flex align-items-center gap-1">
-                            Probabilitas Prior P(Pi)
-                            <span class="badge bg-info bg-opacity-10 text-info" style="font-size:0.7rem;font-weight:500;">Untuk Bayes</span>
-                        </label>
-                        <input type="number" name="probabilitas_prior" class="form-control"
-                               step="0.01" min="0" max="1" placeholder="Contoh: 0.50" required>
-                        <div class="form-text"><i class="bi bi-info-circle me-1"></i>Nilai antara 0–1. Total semua penyakit sebaiknya = 1.</div>
                     </div>
                 </div>
                 <div class="modal-footer">

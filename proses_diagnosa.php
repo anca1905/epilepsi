@@ -50,15 +50,23 @@ if (empty($penyakit_list)) {
     exit();
 }
 
-// Hitung total prior — normalkan jika tidak sama dengan 1
+// Hitung total prior
 $total_prior = array_sum(array_column($penyakit_list, 'probabilitas_prior'));
 if ($total_prior <= 0) {
-    // Fallback: prior seragam
+    // Fallback: prior seragam jika semua bernilai 0
     $n = count($penyakit_list);
     foreach ($penyakit_list as $kode => $p) {
         $penyakit_list[$kode]['probabilitas_prior'] = 1 / $n;
     }
-    $total_prior = 1;
+    $total_prior = 1.0;
+} elseif (abs($total_prior - 1.0) > 0.0001) {
+    // Normalisasi proporsional jika total tidak sama dengan 1
+    // Contoh: admin memasukkan 0.45 + 0.55 = 1.0 → tidak perlu normalisasi
+    // Contoh: 9 + 11 = 20 → normalisasi jadi 0.45 dan 0.55
+    foreach ($penyakit_list as $kode => $p) {
+        $penyakit_list[$kode]['probabilitas_prior'] = (float)$p['probabilitas_prior'] / $total_prior;
+    }
+    $total_prior = 1.0;
 }
 
 // ── 3. Ambil semua nilai basis untuk gejala terpilih ─
