@@ -265,7 +265,7 @@ body.public-page {
 
 /* ── Gejala Checklist ───────────────────────────────── */
 .gejala-item {
-    padding: 11px 16px;
+    padding: 11px 16px 11px 44px;
     border-bottom: 1px solid #f1f5f9;
     transition: background 0.2s;
     border-radius: 8px;

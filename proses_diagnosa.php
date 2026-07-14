@@ -51,41 +51,38 @@ if (empty($penyakit_list)) {
 }
 
 // Hitung total prior
-$total_prior = array_sum(array_column($penyakit_list, 'probabilitas_prior'));
-if ($total_prior <= 0) {
-    // Fallback: prior seragam jika semua bernilai 0
-    $n = count($penyakit_list);
-    foreach ($penyakit_list as $kode => $p) {
-        $penyakit_list[$kode]['probabilitas_prior'] = 1 / $n;
-    }
-    $total_prior = 1.0;
-} elseif (abs($total_prior - 1.0) > 0.0001) {
-    // Normalisasi proporsional jika total tidak sama dengan 1
-    // Contoh: admin memasukkan 0.45 + 0.55 = 1.0 → tidak perlu normalisasi
-    // Contoh: 9 + 11 = 20 → normalisasi jadi 0.45 dan 0.55
-    foreach ($penyakit_list as $kode => $p) {
-        $penyakit_list[$kode]['probabilitas_prior'] = (float)$p['probabilitas_prior'] / $total_prior;
-    }
-    $total_prior = 1.0;
+// Prior P(Pi) di-hardcode (dibagi rata) karena sudah tidak ada di database
+$n = count($penyakit_list);
+foreach ($penyakit_list as $kode => $p) {
+    $penyakit_list[$kode]['probabilitas_prior'] = $n > 0 ? 1 / $n : 0;
 }
+$total_prior = 1.0;
 
 // ── 3. Ambil semua nilai basis untuk gejala terpilih ─
-// basis_pengetahuan: kode_penyakit, kode_gejala, probabilitas
-$kode_safe = implode("','", array_map(
-    fn($g) => mysqli_real_escape_string($conn, $g),
-    $gejala_dipilih
-));
-
-$q_basis = mysqli_query($conn,
-    "SELECT kode_penyakit, kode_gejala, probabilitas
-     FROM basis_pengetahuan
-     WHERE kode_gejala IN ('$kode_safe')"
-);
+// Aturan P(G|P) di-hardcode ke dalam kodingan
+$hardcoded_basis = [
+    'P01' => [
+        'G01' => 1, 'G02' => 0, 'G03' => 0.1, 'G04' => 0, 'G05' => 0.5,
+        'G06' => 0.3, 'G07' => 0.2, 'G08' => 0, 'G09' => 0, 'G10' => 0.4,
+        'G11' => 0.1, 'G12' => 0.1, 'G13' => 0.3, 'G14' => 0.3, 'G15' => 0,
+        'G16' => 0.2, 'G17' => 0
+    ],
+    'P02' => [
+        'G01' => 1, 'G02' => 1, 'G03' => 0.2, 'G04' => 0.1, 'G05' => 0.2,
+        'G06' => 0.2, 'G07' => 0, 'G08' => 0.1, 'G09' => 0.1, 'G10' => 0,
+        'G11' => 0.3, 'G12' => 0.3, 'G13' => 0, 'G14' => 0, 'G15' => 0,
+        'G16' => 0, 'G17' => 0.3
+    ]
+];
 
 // Buat lookup: $basis[kode_gejala][kode_penyakit] = probabilitas
 $basis = [];
-while ($b = mysqli_fetch_assoc($q_basis)) {
-    $basis[$b['kode_gejala']][$b['kode_penyakit']] = (float)$b['probabilitas'];
+foreach ($gejala_dipilih as $gj) {
+    foreach ($hardcoded_basis as $pk => $gejala_list) {
+        if (isset($gejala_list[$gj])) {
+            $basis[$gj][$pk] = $gejala_list[$gj];
+        }
+    }
 }
 
 // ── 4. Hitung Bayes per gejala ────────────────────────
@@ -195,6 +192,10 @@ mysqli_query($conn,
 );
 
 // ── 8. Ambil nama gejala yang dipilih ─────────────────
+$kode_safe = implode("','", array_map(
+    fn($g) => mysqli_real_escape_string($conn, $g),
+    $gejala_dipilih
+));
 $q_gejala    = mysqli_query($conn,
     "SELECT * FROM gejala WHERE kode_gejala IN ('$kode_safe') ORDER BY kode_gejala ASC"
 );
@@ -323,6 +324,18 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
                             </div>
                             <p class="text-muted mb-0" style="font-size:0.88rem;line-height:1.7;">
                                 <?= nl2br(htmlspecialchars($diagnosa_utama['solusi'])) ?>
+                            </p>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($diagnosa_utama['kapan_ke_dokter'])): ?>
+                    <div class="col-md-12 mt-3">
+                        <div class="p-3 rounded-3 h-100" style="background:#fff1f2;border:1px solid #fecdd3;">
+                            <div class="fw-bold mb-2 d-flex align-items-center gap-2 text-danger" style="font-size:0.9rem;">
+                                <i class="bi bi-hospital text-danger"></i>Kapan Harus Ke Dokter
+                            </div>
+                            <p class="text-muted mb-0" style="font-size:0.88rem;line-height:1.7;">
+                                <?= nl2br(htmlspecialchars($diagnosa_utama['kapan_ke_dokter'])) ?>
                             </p>
                         </div>
                     </div>

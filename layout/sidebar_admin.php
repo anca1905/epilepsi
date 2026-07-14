@@ -13,6 +13,7 @@ $active_page = $active_page ?? '';
 $nav_items = [
     ['id' => 'dashboard', 'href' => 'dashboard.php',    'icon' => 'bi-speedometer2',         'label' => 'Dashboard'],
     ['id' => 'diagnosa',  'href' => 'form_pasien.php',  'icon' => 'bi-clipboard2-pulse',     'label' => 'Diagnosa'],
+    ['id' => 'pasien',    'href' => 'admin_pasien.php', 'icon' => 'bi-person-lines-fill',    'label' => 'Data Pasien'],
     ['id' => 'gejala',    'href' => 'admin_gejala.php',  'icon' => 'bi-file-earmark-medical', 'label' => 'Data Gejala'],
     ['id' => 'penyakit',  'href' => 'admin_penyakit.php','icon' => 'bi-virus',                'label' => 'Data Penyakit'],
     ['id' => 'basis',     'href' => 'admin_basis.php',   'icon' => 'bi-diagram-3',            'label' => 'Basis Pengetahuan'],

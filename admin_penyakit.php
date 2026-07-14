@@ -15,16 +15,13 @@ if (isset($_POST['tambah'])) {
     $nama       = mysqli_real_escape_string($conn, $_POST['nama_penyakit']);
     $keterangan = mysqli_real_escape_string($conn, $_POST['keterangan']);
     $solusi     = mysqli_real_escape_string($conn, $_POST['solusi']);
-    $prior      = (float)$_POST['probabilitas_prior'];
-    // Pastikan nilai prior valid (antara 0 dan 1)
-    if ($prior < 0) $prior = 0;
-    if ($prior > 1) $prior = 1;
+    $kapan_ke_dokter = mysqli_real_escape_string($conn, $_POST['kapan_ke_dokter']);
 
     $cek = mysqli_query($conn, "SELECT * FROM penyakit WHERE kode_penyakit = '$kode'");
     if (mysqli_num_rows($cek) > 0) {
         $pesan = "<div class='alert alert-warning'><i class='bi bi-exclamation-triangle me-2'></i>Kode Penyakit <strong>$kode</strong> sudah digunakan!</div>";
     } else {
-        $insert = mysqli_query($conn, "INSERT INTO penyakit (kode_penyakit, nama_penyakit, keterangan, solusi, probabilitas_prior) VALUES ('$kode', '$nama', '$keterangan', '$solusi', '$prior')");
+        $insert = mysqli_query($conn, "INSERT INTO penyakit (kode_penyakit, nama_penyakit, keterangan, solusi, kapan_ke_dokter) VALUES ('$kode', '$nama', '$keterangan', '$solusi', '$kapan_ke_dokter')");
         if ($insert) {
             $pesan = "<div class='alert alert-success'><i class='bi bi-check-circle me-2'></i>Data penyakit berhasil ditambahkan!</div>";
         } else {
@@ -40,11 +37,9 @@ if (isset($_POST['edit'])) {
     $nama       = mysqli_real_escape_string($conn, $_POST['nama_penyakit']);
     $keterangan = mysqli_real_escape_string($conn, $_POST['keterangan']);
     $solusi     = mysqli_real_escape_string($conn, $_POST['solusi']);
-    $prior      = (float)$_POST['probabilitas_prior'];
-    if ($prior < 0) $prior = 0;
-    if ($prior > 1) $prior = 1;
+    $kapan_ke_dokter = mysqli_real_escape_string($conn, $_POST['kapan_ke_dokter']);
 
-    $update = mysqli_query($conn, "UPDATE penyakit SET kode_penyakit = '$kode_baru', nama_penyakit = '$nama', keterangan = '$keterangan', solusi = '$solusi', probabilitas_prior = '$prior' WHERE kode_penyakit = '$kode_lama'");
+    $update = mysqli_query($conn, "UPDATE penyakit SET kode_penyakit = '$kode_baru', nama_penyakit = '$nama', keterangan = '$keterangan', solusi = '$solusi', kapan_ke_dokter = '$kapan_ke_dokter' WHERE kode_penyakit = '$kode_lama'");
     if ($update) {
         $pesan = "<div class='alert alert-success'><i class='bi bi-check-circle me-2'></i>Data penyakit berhasil diperbarui!</div>";
     } else {
@@ -116,7 +111,7 @@ require 'layout/sidebar_admin.php';
                             <th style="width:15%;">Nama Penyakit</th>
                             <th style="width:15%;">Keterangan</th>
                             <th style="width:22%;">Solusi Penanganan</th>
-                            <th class="text-center" style="width:10%;">Prior P(Pi)</th>
+                            <th style="width:18%;">Kapan Ke Dokter</th>
                             <th class="text-center" style="width:13%;">Aksi</th>
                         </tr>
                     </thead>
@@ -145,10 +140,10 @@ require 'layout/sidebar_admin.php';
                                     <?= htmlspecialchars($row['solusi']) ?>
                                 </div>
                             </td>
-                            <td class="text-center">
-                                <span class="badge" style="background:rgba(16,185,129,0.12);color:#059669;font-size:0.82rem;padding:5px 10px;font-weight:600;">
-                                    <?= number_format((float)$row['probabilitas_prior'], 4) ?>
-                                </span>
+                            <td>
+                                <div class="text-muted" style="font-size:0.87rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                                    <?= htmlspecialchars($row['kapan_ke_dokter'] ?? '') ?>
+                                </div>
                             </td>
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary me-1"
@@ -189,13 +184,7 @@ require 'layout/sidebar_admin.php';
                                             <input type="text" name="nama_penyakit" class="form-control"
                                                    value="<?= htmlspecialchars($row['nama_penyakit']) ?>" required>
                                         </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Prior P(Pi) <small class="text-muted">(0–1)</small></label>
-                                            <input type="number" name="probabilitas_prior" class="form-control"
-                                                   value="<?= number_format((float)$row['probabilitas_prior'], 4, '.', '') ?>"
-                                                   min="0" max="1" step="0.0001" required>
-                                            <div class="form-text">Contoh: 9 pasien dari 20 → 0.45</div>
-                                        </div>
+
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Keterangan / Deskripsi</label>
@@ -204,6 +193,10 @@ require 'layout/sidebar_admin.php';
                                     <div class="mb-3">
                                         <label class="form-label">Solusi Penanganan Awal</label>
                                         <textarea name="solusi" class="form-control" rows="3" required><?= htmlspecialchars($row['solusi']) ?></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Kapan Harus Ke Dokter</label>
+                                        <textarea name="kapan_ke_dokter" class="form-control" rows="3" required><?= htmlspecialchars($row['kapan_ke_dokter'] ?? '') ?></textarea>
                                     </div>        </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
@@ -254,12 +247,7 @@ require 'layout/sidebar_admin.php';
                             <label class="form-label">Nama Penyakit</label>
                             <input type="text" name="nama_penyakit" class="form-control" placeholder="Contoh: Epilepsi Parsial Sederhana" required>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Prior P(Pi) <small class="text-muted">(0–1)</small></label>
-                            <input type="number" name="probabilitas_prior" class="form-control"
-                                   placeholder="Contoh: 0.45" min="0" max="1" step="0.0001" required>
-                            <div class="form-text">Contoh: 9 dari 20 pasien → 0.45</div>
-                        </div>
+
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Keterangan / Deskripsi</label>
@@ -268,6 +256,10 @@ require 'layout/sidebar_admin.php';
                     <div class="mb-3">
                         <label class="form-label">Solusi Penanganan Awal</label>
                         <textarea name="solusi" class="form-control" rows="3" placeholder="Contoh: Amankan lingkungan sekitar anak..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kapan Harus Ke Dokter</label>
+                        <textarea name="kapan_ke_dokter" class="form-control" rows="3" placeholder="Contoh: Jika kejang berlangsung lebih dari 5 menit..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
