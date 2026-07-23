@@ -44,7 +44,7 @@ if (isset($_POST['edit'])) {
 if (isset($_GET['hapus'])) {
     $id_hapus = (int)$_GET['hapus'];
     // Hapus hasil terkait (jika tidak ada cascade)
-    mysqli_query($conn, "DELETE FROM hasil WHERE id_pengguna = $id_hapus");
+    mysqli_query($conn, "DELETE FROM riwayat_diagnosa WHERE id_pengguna = $id_hapus");
     
     $hapus = mysqli_query($conn, "DELETE FROM pengguna WHERE id_pengguna = $id_hapus");
     if ($hapus) {
