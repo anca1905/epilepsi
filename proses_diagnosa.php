@@ -1,5 +1,7 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 /**
  * proses_diagnosa.php
  * ─────────────────────────────────────────────────────
@@ -58,32 +60,15 @@ foreach ($penyakit_list as $kode => $p) {
 }
 $total_prior = 1.0;
 
-// ── 3. Ambil semua nilai basis untuk gejala terpilih ─
-// Aturan P(G|P) di-hardcode ke dalam kodingan
-$hardcoded_basis = [
-    'P01' => [
-        'G01' => 1, 'G02' => 0, 'G03' => 0.1, 'G04' => 0, 'G05' => 0.5,
-        'G06' => 0.3, 'G07' => 0.2, 'G08' => 0, 'G09' => 0, 'G10' => 0.4,
-        'G11' => 0.1, 'G12' => 0.1, 'G13' => 0.3, 'G14' => 0.3, 'G15' => 0,
-        'G16' => 0.2, 'G17' => 0
-    ],
-    'P02' => [
-        'G01' => 1, 'G02' => 1, 'G03' => 0.2, 'G04' => 0.1, 'G05' => 0.2,
-        'G06' => 0.2, 'G07' => 0, 'G08' => 0.1, 'G09' => 0.1, 'G10' => 0,
-        'G11' => 0.3, 'G12' => 0.3, 'G13' => 0, 'G14' => 0, 'G15' => 0,
-        'G16' => 0, 'G17' => 0.3
-    ]
-];
-
-// Buat lookup: $basis[kode_gejala][kode_penyakit] = probabilitas
+// ── 3. Ambil nilai basis P(G|P) dari tabel basis_pengetahuan ─
+// Data dikelola oleh admin melalui halaman Basis Pengetahuan
+$q_basis = mysqli_query($conn, "SELECT kode_penyakit, kode_gejala, probabilitas FROM basis_pengetahuan");
 $basis = [];
-foreach ($gejala_dipilih as $gj) {
-    foreach ($hardcoded_basis as $pk => $gejala_list) {
-        if (isset($gejala_list[$gj])) {
-            $basis[$gj][$pk] = $gejala_list[$gj];
-        }
-    }
+while ($b = mysqli_fetch_assoc($q_basis)) {
+    // $basis[kode_gejala][kode_penyakit] = probabilitas
+    $basis[$b['kode_gejala']][$b['kode_penyakit']] = (float)$b['probabilitas'];
 }
+// Gejala/penyakit yang tidak ada di tabel dianggap probabilitas 0 (sudah ter-handle oleh ?? 0 di bawah)
 
 // ── 4. Hitung Bayes per gejala ────────────────────────
 // Struktur: $val[kode_gejala][kode_penyakit] = val(Pi,Gj)
@@ -186,7 +171,8 @@ $kode_simpan  = mysqli_real_escape_string($conn, $diagnosa_utama['kode_penyakit'
 $nilai_simpan = $diagnosa_utama['presentase'];
 $tgl_simpan   = date('Y-m-d');
 
-mysqli_query($conn,
+mysqli_query(
+    $conn,
     "INSERT INTO riwayat_diagnosa (id_pengguna, tanggal, kode_penyakit, nilai_bayes)
      VALUES ('$id_pengguna', '$tgl_simpan', '$kode_simpan', '$nilai_simpan')"
 );
@@ -196,7 +182,8 @@ $kode_safe = implode("','", array_map(
     fn($g) => mysqli_real_escape_string($conn, $g),
     $gejala_dipilih
 ));
-$q_gejala    = mysqli_query($conn,
+$q_gejala    = mysqli_query(
+    $conn,
     "SELECT * FROM gejala WHERE kode_gejala IN ('$kode_safe') ORDER BY kode_gejala ASC"
 );
 $gejala_data = [];
@@ -220,8 +207,8 @@ if (isset($_SESSION['login_admin'])) {
 
 $pct = round($diagnosa_utama['presentase'] * 100, 2);
 $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg' => '#f0fdf4']
-     : ($pct >= 30 ? ['teks' => 'Kemungkinan Sedang',  'kelas' => 'warning', 'bg' => '#fffbeb']
-     :                ['teks' => 'Kemungkinan Rendah',  'kelas' => 'danger',  'bg' => '#fff1f2']);
+    : ($pct >= 30 ? ['teks' => 'Kemungkinan Sedang',  'kelas' => 'warning', 'bg' => '#fffbeb']
+        :                ['teks' => 'Kemungkinan Rendah',  'kelas' => 'danger',  'bg' => '#fff1f2']);
 ?>
 
 <div class="container py-5">
@@ -238,13 +225,13 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
 
             <!-- Step Indicator -->
             <div class="d-flex align-items-center gap-2 mb-4">
-                <?php foreach ([1,2,3] as $step): ?>
+                <?php foreach ([1, 2, 3] as $step): ?>
                     <div class="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold"
-                         style="width:32px;height:32px;background:<?= $step < 3 ? '#6ee7b7;color:#064e3b' : 'var(--brand-primary)' ?>;font-size:0.85rem;">
+                        style="width:32px;height:32px;background:<?= $step < 3 ? '#6ee7b7;color:#064e3b' : 'var(--brand-primary)' ?>;font-size:0.85rem;">
                         <?= $step < 3 ? '<i class="bi bi-check-lg" style="font-size:1rem;"></i>' : '3' ?>
                     </div>
                     <?php if ($step < 3): ?>
-                    <div class="flex-grow-1" style="height:3px;background:var(--brand-primary);border-radius:2px;"></div>
+                        <div class="flex-grow-1" style="height:3px;background:var(--brand-primary);border-radius:2px;"></div>
                     <?php endif; ?>
                 <?php endforeach; ?>
             </div>
@@ -258,7 +245,7 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
             <div class="page-card mb-4">
                 <div class="d-flex align-items-start gap-3 mb-4">
                     <div class="d-flex align-items-center justify-content-center rounded-circle text-white"
-                         style="width:52px;height:52px;background:var(--brand-gradient);flex-shrink:0;font-size:1.4rem;">
+                        style="width:52px;height:52px;background:var(--brand-gradient);flex-shrink:0;font-size:1.4rem;">
                         <i class="bi bi-shield-check"></i>
                     </div>
                     <div>
@@ -292,7 +279,7 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
                         <div style="flex:1;max-width:220px;">
                             <div class="progress mb-1" style="height:14px;border-radius:7px;">
                                 <div class="progress-bar bg-<?= $lvl['kelas'] ?>"
-                                     style="width:<?= $pct ?>%;border-radius:7px;"></div>
+                                    style="width:<?= $pct ?>%;border-radius:7px;"></div>
                             </div>
                             <div class="d-flex justify-content-between" style="font-size:0.72rem;color:#94a3b8;">
                                 <span>0%</span><span>50%</span><span>100%</span>
@@ -303,44 +290,44 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
 
                 <!-- Keterangan & Solusi -->
                 <?php if ($diagnosa_utama['keterangan'] || $diagnosa_utama['solusi']): ?>
-                <div class="row g-3 mb-4">
-                    <?php if ($diagnosa_utama['keterangan']): ?>
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 h-100" style="background:#f8fafc;border:1px solid #e2e8f0;">
-                            <div class="fw-bold mb-2 d-flex align-items-center gap-2" style="font-size:0.9rem;">
-                                <i class="bi bi-info-circle text-primary"></i>Keterangan Penyakit
+                    <div class="row g-3 mb-4">
+                        <?php if ($diagnosa_utama['keterangan']): ?>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3 h-100" style="background:#f8fafc;border:1px solid #e2e8f0;">
+                                    <div class="fw-bold mb-2 d-flex align-items-center gap-2" style="font-size:0.9rem;">
+                                        <i class="bi bi-info-circle text-primary"></i>Keterangan Penyakit
+                                    </div>
+                                    <p class="text-muted mb-0" style="font-size:0.88rem;line-height:1.7;">
+                                        <?= nl2br(htmlspecialchars($diagnosa_utama['keterangan'])) ?>
+                                    </p>
+                                </div>
                             </div>
-                            <p class="text-muted mb-0" style="font-size:0.88rem;line-height:1.7;">
-                                <?= nl2br(htmlspecialchars($diagnosa_utama['keterangan'])) ?>
-                            </p>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    <?php if ($diagnosa_utama['solusi']): ?>
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 h-100" style="background:#f0fdf7;border:1px solid #bbf7d0;">
-                            <div class="fw-bold mb-2 d-flex align-items-center gap-2" style="font-size:0.9rem;">
-                                <i class="bi bi-patch-check text-success"></i>Penanganan Awal
+                        <?php endif; ?>
+                        <?php if ($diagnosa_utama['solusi']): ?>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3 h-100" style="background:#f0fdf7;border:1px solid #bbf7d0;">
+                                    <div class="fw-bold mb-2 d-flex align-items-center gap-2" style="font-size:0.9rem;">
+                                        <i class="bi bi-patch-check text-success"></i>Penanganan Awal
+                                    </div>
+                                    <p class="text-muted mb-0" style="font-size:0.88rem;line-height:1.7;">
+                                        <?= nl2br(htmlspecialchars($diagnosa_utama['solusi'])) ?>
+                                    </p>
+                                </div>
                             </div>
-                            <p class="text-muted mb-0" style="font-size:0.88rem;line-height:1.7;">
-                                <?= nl2br(htmlspecialchars($diagnosa_utama['solusi'])) ?>
-                            </p>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    <?php if (!empty($diagnosa_utama['kapan_ke_dokter'])): ?>
-                    <div class="col-md-12 mt-3">
-                        <div class="p-3 rounded-3 h-100" style="background:#fff1f2;border:1px solid #fecdd3;">
-                            <div class="fw-bold mb-2 d-flex align-items-center gap-2 text-danger" style="font-size:0.9rem;">
-                                <i class="bi bi-hospital text-danger"></i>Kapan Harus Ke Dokter
+                        <?php endif; ?>
+                        <?php if (!empty($diagnosa_utama['kapan_ke_dokter'])): ?>
+                            <div class="col-md-12 mt-3">
+                                <div class="p-3 rounded-3 h-100" style="background:#fff1f2;border:1px solid #fecdd3;">
+                                    <div class="fw-bold mb-2 d-flex align-items-center gap-2 text-danger" style="font-size:0.9rem;">
+                                        <i class="bi bi-hospital text-danger"></i>Kapan Harus Ke Dokter
+                                    </div>
+                                    <p class="text-muted mb-0" style="font-size:0.88rem;line-height:1.7;">
+                                        <?= nl2br(htmlspecialchars($diagnosa_utama['kapan_ke_dokter'])) ?>
+                                    </p>
+                                </div>
                             </div>
-                            <p class="text-muted mb-0" style="font-size:0.88rem;line-height:1.7;">
-                                <?= nl2br(htmlspecialchars($diagnosa_utama['kapan_ke_dokter'])) ?>
-                            </p>
-                        </div>
+                        <?php endif; ?>
                     </div>
-                    <?php endif; ?>
-                </div>
                 <?php endif; ?>
 
                 <!-- Gejala yang Dipilih -->
@@ -351,11 +338,11 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         <?php foreach ($gejala_dipilih as $kg): ?>
-                        <span class="badge rounded-pill d-flex align-items-center gap-1"
-                              style="background:rgba(26,127,90,0.08);color:var(--brand-primary);border:1px solid rgba(26,127,90,0.2);padding:6px 12px;font-weight:500;font-size:0.82rem;">
-                            <i class="bi bi-check-circle-fill" style="font-size:0.75rem;"></i>
-                            [<?= $kg ?>] <?= htmlspecialchars($gejala_data[$kg]['nama_gejala'] ?? $kg) ?>
-                        </span>
+                            <span class="badge rounded-pill d-flex align-items-center gap-1"
+                                style="background:rgba(26,127,90,0.08);color:var(--brand-primary);border:1px solid rgba(26,127,90,0.2);padding:6px 12px;font-weight:500;font-size:0.82rem;">
+                                <i class="bi bi-check-circle-fill" style="font-size:0.75rem;"></i>
+                                [<?= $kg ?>] <?= htmlspecialchars($gejala_data[$kg]['nama_gejala'] ?? $kg) ?>
+                            </span>
                         <?php endforeach; ?>
                     </div>
                 </div>
@@ -392,47 +379,48 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
                             </tr>
                         </thead>
                         <tbody>
-                            <?php $no = 1; foreach ($hasil as $h): ?>
-                            <?php
-                            $h_pct   = round($h['presentase'] * 100, 2);
-                            $h_color = $h_pct >= 50 ? 'success' : ($h_pct >= 30 ? 'warning' : 'secondary');
-                            $is_top  = $h['kode_penyakit'] === $diagnosa_utama['kode_penyakit'];
-                            ?>
-                            <tr class="<?= $is_top ? 'table-success' : '' ?>">
-                                <td class="text-muted"><?= $no++ ?></td>
-                                <td>
-                                    <div class="fw-semibold" style="font-size:0.9rem;">
-                                        <?= htmlspecialchars($h['nama_penyakit']) ?>
-                                        <?php if ($is_top): ?>
-                                        <span class="badge bg-success ms-1" style="font-size:0.7rem;">Terdiagnosa</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <span class="badge rounded-pill"
-                                          style="background:rgba(13,110,253,0.1);color:#0d6efd;font-size:0.7rem;">
-                                        <?= $h['kode_penyakit'] ?>
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <span style="font-size:0.9rem;font-weight:600;">
-                                        <?= number_format((float)$h['probabilitas_prior'], 2) ?>
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="text-muted" style="font-size:0.85rem;">
-                                        <?= number_format($h['score'], 4) ?>
-                                    </span>
-                                </td>
-                                <td class="text-center fw-bold" style="font-size:1.05rem;">
-                                    <?= number_format($h_pct, 2) ?>%
-                                </td>
-                                <td>
-                                    <div class="progress" style="height:10px;border-radius:5px;">
-                                        <div class="progress-bar bg-<?= $h_color ?>"
-                                             style="width:<?= $h_pct ?>%;border-radius:5px;">
+                            <?php $no = 1;
+                            foreach ($hasil as $h): ?>
+                                <?php
+                                $h_pct   = round($h['presentase'] * 100, 2);
+                                $h_color = $h_pct >= 50 ? 'success' : ($h_pct >= 30 ? 'warning' : 'secondary');
+                                $is_top  = $h['kode_penyakit'] === $diagnosa_utama['kode_penyakit'];
+                                ?>
+                                <tr class="<?= $is_top ? 'table-success' : '' ?>">
+                                    <td class="text-muted"><?= $no++ ?></td>
+                                    <td>
+                                        <div class="fw-semibold" style="font-size:0.9rem;">
+                                            <?= htmlspecialchars($h['nama_penyakit']) ?>
+                                            <?php if ($is_top): ?>
+                                                <span class="badge bg-success ms-1" style="font-size:0.7rem;">Terdiagnosa</span>
+                                            <?php endif; ?>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
+                                        <span class="badge rounded-pill"
+                                            style="background:rgba(13,110,253,0.1);color:#0d6efd;font-size:0.7rem;">
+                                            <?= $h['kode_penyakit'] ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span style="font-size:0.9rem;font-weight:600;">
+                                            <?= number_format((float)$h['probabilitas_prior'], 2) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="text-muted" style="font-size:0.85rem;">
+                                            <?= number_format($h['score'], 4) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center fw-bold" style="font-size:1.05rem;">
+                                        <?= number_format($h_pct, 2) ?>%
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height:10px;border-radius:5px;">
+                                            <div class="progress-bar bg-<?= $h_color ?>"
+                                                style="width:<?= $h_pct ?>%;border-radius:5px;">
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
@@ -446,7 +434,7 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
                         <i class="bi bi-calculator me-2 text-secondary"></i>Detail Perhitungan Bayes
                     </h5>
                     <button class="btn btn-sm btn-outline-secondary" type="button"
-                            data-bs-toggle="collapse" data-bs-target="#collapseDetail">
+                        data-bs-toggle="collapse" data-bs-target="#collapseDetail">
                         <i class="bi bi-chevron-down me-1"></i>Tampilkan
                     </button>
                 </div>
@@ -456,49 +444,49 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
                     </p>
 
                     <?php if (!empty($detail_per_gejala)): ?>
-                    <?php foreach ($detail_per_gejala as $kg => $detail): ?>
-                    <?php $gejala_nama = $gejala_data[$kg]['nama_gejala'] ?? $kg; ?>
-                    <div class="mb-3">
-                        <div class="fw-semibold mb-1" style="font-size:0.88rem;">
-                            [<?= $kg ?>] <?= htmlspecialchars($gejala_nama) ?>
-                            <span class="text-muted fw-normal">
-                                — P(Gj) = <?= number_format($detail['PGj'], 6) ?>
-                            </span>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm mb-0" style="font-size:0.8rem;">
-                                <thead>
-                                    <tr style="background:#f8fafc;">
-                                        <th>Penyakit</th>
-                                        <th class="text-center">P(Gj|Pi)</th>
-                                        <th class="text-center">P(Pi)</th>
-                                        <th class="text-center">P(Pi|Gj)</th>
-                                        <th class="text-center">val(Pi,Gj)</th>
-                                        <th class="text-center">val/PGj</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($penyakit_list as $kp => $p):
-                                        $d = $detail['per_penyakit'][$kp] ?? ['likelihood'=>0,'prior'=>0,'posterior'=>0,'val'=>0];
-                                        $contribution = ($detail['PGj'] > 0 && $d['likelihood'] > 0)
-                                            ? $d['val'] / $detail['PGj'] : 0;
-                                    ?>
-                                    <tr class="<?= $d['likelihood'] > 0 ? '' : 'text-muted' ?>">
-                                        <td><?= htmlspecialchars($p['nama_penyakit']) ?> (<?= $kp ?>)</td>
-                                        <td class="text-center"><?= number_format($d['likelihood'], 4) ?></td>
-                                        <td class="text-center"><?= number_format((float)$p['probabilitas_prior'], 2) ?></td>
-                                        <td class="text-center"><?= number_format($d['posterior'], 4) ?></td>
-                                        <td class="text-center"><?= number_format($d['val'], 6) ?></td>
-                                        <td class="text-center fw-semibold <?= $d['likelihood'] > 0 ? 'text-success' : '' ?>">
-                                            <?= number_format($contribution, 4) ?>
-                                        </td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
+                        <?php foreach ($detail_per_gejala as $kg => $detail): ?>
+                            <?php $gejala_nama = $gejala_data[$kg]['nama_gejala'] ?? $kg; ?>
+                            <div class="mb-3">
+                                <div class="fw-semibold mb-1" style="font-size:0.88rem;">
+                                    [<?= $kg ?>] <?= htmlspecialchars($gejala_nama) ?>
+                                    <span class="text-muted fw-normal">
+                                        — P(Gj) = <?= number_format($detail['PGj'], 6) ?>
+                                    </span>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0" style="font-size:0.8rem;">
+                                        <thead>
+                                            <tr style="background:#f8fafc;">
+                                                <th>Penyakit</th>
+                                                <th class="text-center">P(Gj|Pi)</th>
+                                                <th class="text-center">P(Pi)</th>
+                                                <th class="text-center">P(Pi|Gj)</th>
+                                                <th class="text-center">val(Pi,Gj)</th>
+                                                <th class="text-center">val/PGj</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($penyakit_list as $kp => $p):
+                                                $d = $detail['per_penyakit'][$kp] ?? ['likelihood' => 0, 'prior' => 0, 'posterior' => 0, 'val' => 0];
+                                                $contribution = ($detail['PGj'] > 0 && $d['likelihood'] > 0)
+                                                    ? $d['val'] / $detail['PGj'] : 0;
+                                            ?>
+                                                <tr class="<?= $d['likelihood'] > 0 ? '' : 'text-muted' ?>">
+                                                    <td><?= htmlspecialchars($p['nama_penyakit']) ?> (<?= $kp ?>)</td>
+                                                    <td class="text-center"><?= number_format($d['likelihood'], 4) ?></td>
+                                                    <td class="text-center"><?= number_format((float)$p['probabilitas_prior'], 2) ?></td>
+                                                    <td class="text-center"><?= number_format($d['posterior'], 4) ?></td>
+                                                    <td class="text-center"><?= number_format($d['val'], 6) ?></td>
+                                                    <td class="text-center fw-semibold <?= $d['likelihood'] > 0 ? 'text-success' : '' ?>">
+                                                        <?= number_format($contribution, 4) ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     <?php endif; ?>
 
                     <!-- Rekap Score Akhir -->
@@ -515,12 +503,12 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
                             </thead>
                             <tbody>
                                 <?php foreach ($hasil as $h): ?>
-                                <tr class="<?= $h['kode_penyakit'] === $diagnosa_utama['kode_penyakit'] ? 'table-success fw-bold' : '' ?>">
-                                    <td><?= htmlspecialchars($h['nama_penyakit']) ?></td>
-                                    <td class="text-center"><?= number_format($h['score'], 4) ?></td>
-                                    <td class="text-center"><?= number_format($total_score, 4) ?></td>
-                                    <td class="text-center"><?= number_format($h['presentase'] * 100, 2) ?>%</td>
-                                </tr>
+                                    <tr class="<?= $h['kode_penyakit'] === $diagnosa_utama['kode_penyakit'] ? 'table-success fw-bold' : '' ?>">
+                                        <td><?= htmlspecialchars($h['nama_penyakit']) ?></td>
+                                        <td class="text-center"><?= number_format($h['score'], 4) ?></td>
+                                        <td class="text-center"><?= number_format($total_score, 4) ?></td>
+                                        <td class="text-center"><?= number_format($h['presentase'] * 100, 2) ?>%</td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -533,8 +521,8 @@ $lvl = $pct >= 50 ? ['teks' => 'Kemungkinan Tinggi',  'kelas' => 'success', 'bg'
                 <div class="d-flex gap-2 align-items-start">
                     <i class="bi bi-exclamation-triangle-fill text-warning mt-1 flex-shrink-0"></i>
                     <p class="mb-0 text-dark" style="font-size:0.83rem;line-height:1.7;">
-                        <strong>Peringatan:</strong> Hasil diagnosa ini merupakan estimasi awal menggunakan metode 
-                        Probabilitas Bayes berdasarkan gejala yang diinputkan dan <strong>tidak menggantikan diagnosis medis profesional</strong>. 
+                        <strong>Peringatan:</strong> Hasil diagnosa ini merupakan estimasi awal menggunakan metode
+                        Probabilitas Bayes berdasarkan gejala yang diinputkan dan <strong>tidak menggantikan diagnosis medis profesional</strong>.
                         Segera konsultasikan kondisi anak ke dokter atau fasilitas kesehatan terdekat.
                     </p>
                 </div>

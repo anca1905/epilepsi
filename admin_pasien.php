@@ -45,7 +45,7 @@ if (isset($_GET['hapus'])) {
     $id_hapus = (int)$_GET['hapus'];
     // Hapus hasil terkait (jika tidak ada cascade)
     mysqli_query($conn, "DELETE FROM riwayat_diagnosa WHERE id_pengguna = $id_hapus");
-    
+
     $hapus = mysqli_query($conn, "DELETE FROM pengguna WHERE id_pengguna = $id_hapus");
     if ($hapus) {
         header("Location: admin_pasien.php?pesan=hapus_sukses");
@@ -114,83 +114,84 @@ require 'layout/sidebar_admin.php';
                             while ($row = mysqli_fetch_assoc($query_pasien)):
                                 $nomor_pasien = 'PSN-' . str_pad($row['id_pengguna'], 4, '0', STR_PAD_LEFT);
                         ?>
-                        <tr>
-                            <td class="text-center text-muted"><?= $no++ ?></td>
-                            <td>
-                                <span class="badge rounded-pill" style="background:rgba(13,110,253,0.1);color:#0d6efd;font-weight:700;font-size:0.85rem;padding:6px 12px;">
-                                    <?= $nomor_pasien ?>
-                                </span>
-                            </td>
-                            <td class="fw-semibold"><?= htmlspecialchars($row['nama_user']) ?></td>
-                            <td><?= htmlspecialchars($row['umur']) ?> Thn</td>
-                            <td><?= htmlspecialchars($row['no_telpon'] ?: '-') ?></td>
-                            <td>
-                                <div class="text-muted" style="font-size:0.87rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                                    <?= htmlspecialchars($row['alamat'] ?: '-') ?>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-primary me-1"
-                                        data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id_pengguna'] ?>"
-                                        title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <a href="admin_pasien.php?hapus=<?= $row['id_pengguna'] ?>"
-                                   class="btn btn-sm btn-outline-danger"
-                                   onclick="return confirm('Yakin ingin menghapus data pasien ini? (Mungkin akan menghapus riwayat diagnosa juga)')"
-                                   title="Hapus">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            </td>
-                        </tr>
+                                <tr>
+                                    <td class="text-center text-muted"><?= $no++ ?></td>
+                                    <td>
+                                        <span class="badge rounded-pill" style="background:rgba(13,110,253,0.1);color:#0d6efd;font-weight:700;font-size:0.85rem;padding:6px 12px;">
+                                            <?= $nomor_pasien ?>
+                                        </span>
+                                    </td>
+                                    <td class="fw-semibold"><?= htmlspecialchars($row['nama_user']) ?></td>
+                                    <td><?= htmlspecialchars($row['umur']) ?> Thn</td>
+                                    <td><?= htmlspecialchars($row['no_telpon'] ?: '-') ?></td>
+                                    <td>
+                                        <div class="text-muted" style="font-size:0.87rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                                            <?= htmlspecialchars($row['alamat'] ?: '-') ?>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary me-1"
+                                            data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id_pengguna'] ?>"
+                                            title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <a href="admin_pasien.php?hapus=<?= $row['id_pengguna'] ?>"
+                                            class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Yakin ingin menghapus data pasien ini? (Mungkin akan menghapus riwayat diagnosa juga)')"
+                                            title="Hapus">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
 
-                        <!-- Modal Edit -->
-                        <div class="modal fade" id="modalEdit<?= $row['id_pengguna'] ?>" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header" style="background:var(--brand-gradient);">
-                                        <h5 class="modal-title text-white">
-                                            <i class="bi bi-pencil-square me-2"></i>Edit Data Pasien
-                                        </h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                <!-- Modal Edit -->
+                                <div class="modal fade" id="modalEdit<?= $row['id_pengguna'] ?>" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header" style="background:var(--brand-gradient);">
+                                                <h5 class="modal-title text-white">
+                                                    <i class="bi bi-pencil-square me-2"></i>Edit Data Pasien
+                                                </h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form action="" method="POST">
+                                                <div class="modal-body p-4 text-start">
+                                                    <input type="hidden" name="id_pengguna" value="<?= $row['id_pengguna'] ?>">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Nama Pasien</label>
+                                                        <input type="text" name="nama_user" class="form-control" value="<?= htmlspecialchars($row['nama_user']) ?>" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Umur (Tahun)</label>
+                                                        <input type="number" name="umur" class="form-control" value="<?= htmlspecialchars($row['umur']) ?>" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">No. Telepon / WhatsApp</label>
+                                                        <input type="text" name="no_telpon" class="form-control" value="<?= htmlspecialchars($row['no_telpon']) ?>" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Alamat Lengkap</label>
+                                                        <textarea name="alamat" class="form-control" rows="3" required><?= htmlspecialchars($row['alamat']) ?></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                                                    <button type="submit" name="edit" class="btn btn-brand">
+                                                        <i class="bi bi-save me-1"></i>Simpan
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
-                                    <form action="" method="POST">
-                                        <div class="modal-body p-4 text-start">
-                                            <input type="hidden" name="id_pengguna" value="<?= $row['id_pengguna'] ?>">
-                                            <div class="mb-3">
-                                                <label class="form-label">Nama Pasien</label>
-                                                <input type="text" name="nama_user" class="form-control" value="<?= htmlspecialchars($row['nama_user']) ?>" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Umur (Tahun)</label>
-                                                <input type="number" name="umur" class="form-control" value="<?= htmlspecialchars($row['umur']) ?>" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">No. Telepon / WhatsApp</label>
-                                                <input type="text" name="no_telpon" class="form-control" value="<?= htmlspecialchars($row['no_telpon']) ?>" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Alamat Lengkap</label>
-                                                <textarea name="alamat" class="form-control" rows="3" required><?= htmlspecialchars($row['alamat']) ?></textarea>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" name="edit" class="btn btn-brand">
-                                                <i class="bi bi-save me-1"></i>Simpan
-                                            </button>
-                                        </div>
-                                    </form>
                                 </div>
-                            </div>
-                        </div>
-                        <?php endwhile; else: ?>
-                        <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                Belum ada data pasien.
-                            </td>
-                        </tr>
+                            <?php endwhile;
+                        else: ?>
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                    Belum ada data pasien.
+                                </td>
+                            </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -212,9 +213,21 @@ require 'layout/sidebar_admin.php';
             </div>
             <form action="" method="POST">
                 <div class="modal-body p-4 text-start">
-                    <div class="mb-3">
+                    <div class="mb-3 position-relative">
                         <label class="form-label">Nama Pasien</label>
-                        <input type="text" name="nama_user" class="form-control" placeholder="Masukkan nama lengkap pasien" required>
+                        <input type="text" id="tambahNamaInput" name="nama_user" class="form-control"
+                            placeholder="Masukkan nama lengkap pasien" autocomplete="off" required>
+                        <!-- Autocomplete dropdown admin -->
+                        <div id="adminAutocompleteDrop"
+                            class="border rounded-3 bg-white shadow-sm d-none"
+                            style="position:absolute;top:100%;left:0;right:0;z-index:1055;max-height:220px;overflow-y:auto;">
+                        </div>
+                        <div id="adminNamaWarning" class="mt-2 d-none">
+                            <div class="alert alert-warning py-2 px-3 mb-0 small">
+                                <i class="bi bi-exclamation-circle me-1"></i>
+                                <span id="adminNamaWarningText"></span>
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Umur (Tahun)</label>
@@ -241,5 +254,100 @@ require 'layout/sidebar_admin.php';
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+    #adminAutocompleteDrop .ac-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background .15s;
+    }
+
+    #adminAutocompleteDrop .ac-item:last-child {
+        border-bottom: none;
+    }
+
+    #adminAutocompleteDrop .ac-item:hover {
+        background: #fff8e1;
+    }
+
+    #adminAutocompleteDrop .ac-header {
+        padding: 6px 14px;
+        font-size: .75rem;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    #adminAutocompleteDrop .ac-badge {
+        font-size: .75rem;
+        background: rgba(234, 179, 8, .15);
+        color: #92400e;
+        border-radius: 100px;
+        padding: 2px 8px;
+        font-weight: 600;
+    }
+</style>
+<script>
+    (function() {
+        const input = document.getElementById('tambahNamaInput');
+        const drop = document.getElementById('adminAutocompleteDrop');
+        const warning = document.getElementById('adminNamaWarning');
+        const warnTxt = document.getElementById('adminNamaWarningText');
+        let timer = null;
+
+        if (!input) return;
+
+        // Reset saat modal ditutup
+        document.getElementById('modalTambah').addEventListener('hidden.bs.modal', function() {
+            input.value = '';
+            hideDrop();
+            hideWarn();
+        });
+
+        input.addEventListener('input', function() {
+            const q = this.value.trim();
+            clearTimeout(timer);
+            hideDrop();
+            hideWarn();
+            if (q.length < 2) return;
+            timer = setTimeout(() => {
+                fetch('form_pasien.php?ajax_cari=1&q=' + encodeURIComponent(q))
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.length === 0) return;
+                        let html = '<div class="ac-header">Nama serupa sudah terdaftar</div>';
+                        data.forEach(item => {
+                            const hl = item.nama.replace(new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>');
+                            html += `<div class="ac-item d-flex justify-content-between align-items-center">
+                            <div><div style="font-weight:600;font-size:.9rem">${hl}</div><div style="font-size:.8rem;color:#64748b">${item.umur} thn | ${item.telpon||'-'}</div></div>
+                            <span class="ac-badge">${item.nomor}</span>
+                        </div>`;
+                        });
+                        drop.innerHTML = html;
+                        drop.classList.remove('d-none');
+                        warnTxt.innerHTML = `Ditemukan <strong>${data.length}</strong> nama serupa. Pastikan bukan duplikasi sebelum menyimpan.`;
+                        warning.classList.remove('d-none');
+                    });
+            }, 300);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !drop.contains(e.target)) hideDrop();
+        });
+
+        function hideDrop() {
+            drop.classList.add('d-none');
+            drop.innerHTML = '';
+        }
+
+        function hideWarn() {
+            warning.classList.add('d-none');
+        }
+    })();
+</script>
 </body>
+
 </html>
